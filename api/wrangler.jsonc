@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "baud-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "baud-db",
+      "database_id": "beeaa6e1-ca79-4fa8-8189-a9aed110a5bf"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "production"
+  }
+}
