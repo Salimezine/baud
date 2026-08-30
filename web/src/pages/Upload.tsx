@@ -1,6 +1,27 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../lib/api';
 import { Upload as UploadIcon } from 'lucide-react';
+import * as XLSX from 'xlsx';
+
+function parseExcelRows(wb: XLSX.WorkBook): any[] {
+  const lignes: any[] = [];
+  for (const name of wb.SheetNames) {
+    const ws = wb.Sheets[name];
+    const data = XLSX.utils.sheet_to_json<Record<string, any>>(ws, { header: 1, defval: '' });
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      if (!row || row.length === 0) continue;
+      const nonEmpty = row.filter((c: any) => c !== '' && c !== null && c !== undefined);
+      if (nonEmpty.length === 0) continue;
+      lignes.push({
+        source_feuille: name,
+        source_ligne: i + 1,
+        champs: row.map((c: any) => String(c ?? '')),
+      });
+    }
+  }
+  return lignes;
+}
 
 export function UploadPage() {
   const [societes, setSocietes] = useState<any[]>([]);
@@ -39,8 +60,11 @@ export function UploadPage() {
     setUploading(true);
     setMsg('');
     try {
-      await apiClient.fichesNavette.upload(dossier.id, file);
-      setMsg('Fichier uploadé');
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { type: 'array' });
+      const lignes = parseExcelRows(wb);
+      await apiClient.fichesNavette.upload(dossier.id, file.name, lignes);
+      setMsg(`Fichier uploadé — ${lignes.length} lignes extraites`);
       setDossier({ ...dossier, fichier_navette_nom: file.name });
     } catch (e: any) {
       setMsg(e.message);
